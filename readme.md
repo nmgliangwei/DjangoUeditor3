@@ -288,3 +288,68 @@ UEditorField的参数如下：
     **别忘记了运行collectstatic命令，该命令可以将ueditor的所有文件复制到{{STATIC_ROOT}}文件夹里面
     **Django默认开启了CSRF中间件，因此如果你的表单没有加入{% csrf_token %}，那么当您上传文件和图片时会失败
    
+##10、Django3.0.7 使用总结(亲测),按照我这个步骤做就可以了,上面的不用管.
+
+1.下载master分支代码,将DjangoUeditor放到你项目根目录下面
+
+2.在项目 setting.py中添加:
+
+在 INSTALLED_APPS 中注册,添加一行
+
+'DjangoUeditor',
+
+在文件尾部添加如下:
+
+MEDIA_URL = '/media/' 
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+X_FRAME_OPTIONS = 'sameorigin'   #不添加这个会提示上传失败,Django3的X_FRAME_OPTIONS默认为deny,所以要设置为sameorigin
+
+3.项目urls.py文件中添加:
+
+from django.urls import path, re_path, include 
+
+from DjangoUeditor import urls as django_ueditor_urls
+
+from myapp import settings   # myapp替换为你的项目文件夹是项目不是应用
+
+在urlpatterns中添加2行:
+
+re_path(r'^ueditor/', include(django_ueditor_urls)),
+
+re_path('^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}), # 为了能够在编辑器里面预览图片
+	
+4.在你app目录models.py修改:
+
+替换默认文本编辑器,可能你的不是body,一样的,在你需要的地方替换使用就可以了
+
+修改前:
+
+body = models.TextField()
+
+修改后:
+
+body = UEditorField('内容', width=800, height=500,
+                    toolbars="full", imagePath="img/", filePath="file/",
+                    upload_settings={"imageMaxSize": 1204000},
+                    settings={}, command=None, blank=True
+                    )
+		  
+5.然后执行迁生成迁移和执行迁移:
+
+python manage.py makemigrations 
+
+python manage.py migrate
+
+此时会出现如下错误
+
+No module named 'django.utils.six'
+
+可以将django2中的django.utils.six.py 文件拷贝到django.utils目录中,然后在执行就可以了.
+
+
+
+
+
+
